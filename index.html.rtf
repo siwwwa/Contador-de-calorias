@@ -1,0 +1,664 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2639
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx566\tx1133\tx1700\tx2267\tx2834\tx3401\tx3968\tx4535\tx5102\tx5669\tx6236\tx6803\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 <!DOCTYPE html>\
+<html lang="ca">\
+<head>\
+  <meta charset="UTF-8">\
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">\
+  <title>NutriTrack - Calculadora Nutricional</title>\
+\
+  <!-- 1. CSS Intern per for\'e7ar el fons no blanc des de l'inici -->\
+  <style>\
+    body, html \{\
+      margin: 0;\
+      padding: 0;\
+      background-color: #FDFBF7; /* Fons color crema per defecte */\
+      font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;\
+    \}\
+    #root \{\
+      min-height: 100vh;\
+      background-color: #FDFBF7;\
+    \}\
+  </style>\
+\
+  <!-- 2. Tailwind CSS (CDN) per estilitzar els components r\'e0pidament -->\
+  <script src="https://cdn.tailwindcss.com"></script>\
+\
+  <!-- 3. FontAwesome (CDN) per a les icones (com has demanat) -->\
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">\
+\
+  <!-- 4. React i ReactDOM (CDN) -->\
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>\
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>\
+  \
+  <!-- 5. Babel (CDN) per processar JSX en temps real al navegador -->\
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>\
+\
+</head>\
+<body>\
+\
+  <div id="root"></div>\
+\
+  <script type="text/babel">\
+    const \{ useState, useMemo \} = React;\
+\
+    // --- CONFIGURACI\'d3 DE COLORS ---\
+    // Eden: #155D27\
+    // Green Ash: #A9C3B4\
+    // Cream: #FDFBF7\
+\
+    // --- BASE DE DADES D'ALIMENTS (Mock extesa) ---\
+    const ALIMENTS = [\
+      \{\
+        id: 1, nom: "Poma", porcioBase: 100, unitat: 'g', calories: 52, tags: [],\
+        macros: \{ carbohidrats: 14, proteina: 0.3, greixos: 0.2 \},\
+        micros: \{ vitA: 3, vitD: 0, vitE: 0.18, vitK: 2.2, vitC: 4.6, vitB1: 0.017, vitB2: 0.026, vitB3: 0.091, vitB5: 0.061, vitB6: 0.041, vitB7: 1.1, vitB9: 3, vitB12: 0, calci: 6, magnesi: 5, sodi: 1, potassi: 107, clor: 1, ferro: 0.12, zinc: 0.04, iode: 0, seleni: 0 \}\
+      \},\
+      \{\
+        id: 2, nom: "Pit de Pollastre", porcioBase: 100, unitat: 'g', calories: 165, tags: [],\
+        macros: \{ carbohidrats: 0, proteina: 31, greixos: 3.6 \},\
+        micros: \{ vitA: 6, vitD: 0.1, vitE: 0.3, vitK: 0, vitC: 0, vitB1: 0.07, vitB2: 0.12, vitB3: 13.7, vitB5: 1.5, vitB6: 0.9, vitB7: 2, vitB9: 4, vitB12: 0.3, calci: 15, magnesi: 29, sodi: 74, potassi: 256, clor: 60, ferro: 1.04, zinc: 1.0, iode: 2, seleni: 27.6 \}\
+      \},\
+      \{\
+        id: 3, nom: "Patates Xip (Bossa)", porcioBase: 100, unitat: 'g', calories: 536, tags: ['alt_greix'],\
+        macros: \{ carbohidrats: 53, proteina: 7, greixos: 35 \},\
+        micros: \{ vitA: 0, vitD: 0, vitE: 9, vitK: 35, vitC: 31, vitB1: 0.2, vitB2: 0.1, vitB3: 4, vitB5: 1.2, vitB6: 0.6, vitB7: 1, vitB9: 35, vitB12: 0, calci: 24, magnesi: 65, sodi: 650, potassi: 1190, clor: 900, ferro: 1.6, zinc: 1.1, iode: 5, seleni: 6.7 \} \
+      \},\
+      \{\
+        id: 4, nom: "Pernil Salat", porcioBase: 100, unitat: 'g', calories: 241, tags: [],\
+        macros: \{ carbohidrats: 0.5, proteina: 28, greixos: 14 \},\
+        micros: \{ vitA: 0, vitD: 0.4, vitE: 0.2, vitK: 0, vitC: 0, vitB1: 0.8, vitB2: 0.2, vitB3: 6, vitB5: 0.6, vitB6: 0.5, vitB7: 0, vitB9: 0, vitB12: 1.2, calci: 12, magnesi: 21, sodi: 1800, potassi: 250, clor: 2200, ferro: 1.5, zinc: 2.3, iode: 0, seleni: 14 \} \
+      \},\
+      \{\
+        id: 5, nom: "Espinacs", porcioBase: 100, unitat: 'g', calories: 23, tags: [],\
+        macros: \{ carbohidrats: 3.6, proteina: 2.9, greixos: 0.4 \},\
+        micros: \{ vitA: 469, vitD: 0, vitE: 2, vitK: 483, vitC: 28, vitB1: 0.08, vitB2: 0.19, vitB3: 0.7, vitB5: 0.06, vitB6: 0.2, vitB7: 6.9, vitB9: 194, vitB12: 0, calci: 99, magnesi: 79, sodi: 79, potassi: 558, clor: 54, ferro: 2.7, zinc: 0.5, iode: 0, seleni: 1 \}\
+      \},\
+      \{\
+        id: 6, nom: "Salm\'f3 a la planxa", porcioBase: 100, unitat: 'g', calories: 206, tags: [],\
+        macros: \{ carbohidrats: 0, proteina: 22, greixos: 13 \},\
+        micros: \{ vitA: 12, vitD: 11, vitE: 1.1, vitK: 0.1, vitC: 0, vitB1: 0.2, vitB2: 0.1, vitB3: 8, vitB5: 1.4, vitB6: 0.6, vitB7: 5, vitB9: 25, vitB12: 3.2, calci: 15, magnesi: 30, sodi: 59, potassi: 363, clor: 70, ferro: 0.8, zinc: 0.6, iode: 21, seleni: 41 \}\
+      \},\
+      \{\
+        id: 7, nom: "Llet Sencera", porcioBase: 250, unitat: 'ml', calories: 150, tags: ['lactosa', 'alt_greix'],\
+        macros: \{ carbohidrats: 12, proteina: 8, greixos: 8 \},\
+        micros: \{ vitA: 68, vitD: 1.2, vitE: 0.1, vitK: 0.3, vitC: 0, vitB1: 0.04, vitB2: 0.18, vitB3: 0.1, vitB5: 0.3, vitB6: 0.04, vitB7: 2, vitB9: 5, vitB12: 0.4, calci: 276, magnesi: 24, sodi: 98, potassi: 322, clor: 100, ferro: 0.1, zinc: 1.0, iode: 30, seleni: 3.7 \}\
+      \},\
+      \{\
+        id: 71, nom: "Llet Semidesnatada", porcioBase: 250, unitat: 'ml', calories: 115, tags: ['lactosa'],\
+        macros: \{ carbohidrats: 12, proteina: 8, greixos: 3.8 \},\
+        micros: \{ vitA: 40, vitD: 1.0, vitE: 0.05, vitK: 0.2, vitC: 0, vitB1: 0.04, vitB2: 0.18, vitB3: 0.1, vitB5: 0.3, vitB6: 0.04, vitB7: 2, vitB9: 5, vitB12: 0.4, calci: 280, magnesi: 25, sodi: 100, potassi: 340, clor: 102, ferro: 0.1, zinc: 1.0, iode: 30, seleni: 3.7 \}\
+      \},\
+      \{\
+        id: 72, nom: "Llet Desnatada", porcioBase: 250, unitat: 'ml', calories: 85, tags: ['lactosa'],\
+        macros: \{ carbohidrats: 12, proteina: 8, greixos: 0.5 \},\
+        micros: \{ vitA: 2, vitD: 0.1, vitE: 0.01, vitK: 0.1, vitC: 0, vitB1: 0.04, vitB2: 0.18, vitB3: 0.1, vitB5: 0.3, vitB6: 0.04, vitB7: 2, vitB9: 5, vitB12: 0.4, calci: 285, magnesi: 26, sodi: 105, potassi: 350, clor: 105, ferro: 0.1, zinc: 1.0, iode: 30, seleni: 3.7 \}\
+      \},\
+      \{\
+        id: 8, nom: "Pa Blanc", porcioBase: 1, unitat: 'llesca', calories: 67, tags: ['gluten'],\
+        macros: \{ carbohidrats: 13, proteina: 2, greixos: 0.8 \},\
+        micros: \{ vitA: 0, vitD: 0, vitE: 0, vitK: 0, vitC: 0, vitB1: 0.1, vitB2: 0.06, vitB3: 1.2, vitB5: 0.1, vitB6: 0.02, vitB7: 0.5, vitB9: 20, vitB12: 0, calci: 15, magnesi: 6, sodi: 130, potassi: 28, clor: 150, ferro: 0.8, zinc: 0.2, iode: 1, seleni: 6 \}\
+      \},\
+      \{\
+        id: 9, nom: "Galetes de Xocolata", porcioBase: 100, unitat: 'g', calories: 480, tags: ['gluten', 'lactosa', 'alt_sucre', 'alt_greix'],\
+        macros: \{ carbohidrats: 65, proteina: 5, greixos: 22 \},\
+        micros: \{ vitA: 10, vitD: 0, vitE: 1.5, vitK: 5, vitC: 0, vitB1: 0.1, vitB2: 0.2, vitB3: 1.5, vitB5: 0.2, vitB6: 0.1, vitB7: 2, vitB9: 15, vitB12: 0.1, calci: 40, magnesi: 35, sodi: 350, potassi: 150, clor: 400, ferro: 2.5, zinc: 0.8, iode: 5, seleni: 4 \}\
+      \},\
+      \{\
+        id: 10, nom: "Refresc de Cola", porcioBase: 330, unitat: 'ml', calories: 140, tags: ['alt_sucre'],\
+        macros: \{ carbohidrats: 39, proteina: 0, greixos: 0 \},\
+        micros: \{ vitA: 0, vitD: 0, vitE: 0, vitK: 0, vitC: 0, vitB1: 0, vitB2: 0, vitB3: 0, vitB5: 0, vitB6: 0, vitB7: 0, vitB9: 0, vitB12: 0, calci: 0, magnesi: 0, sodi: 45, potassi: 0, clor: 0, ferro: 0, zinc: 0, iode: 0, seleni: 0 \}\
+      \},\
+      \{\
+        id: 11, nom: "Tom\'e0quet Xerri", porcioBase: 100, unitat: 'g', calories: 18, tags: [],\
+        macros: \{ carbohidrats: 3.9, proteina: 0.9, greixos: 0.2 \},\
+        micros: \{ vitA: 42, vitD: 0, vitE: 0.5, vitK: 7.9, vitC: 14, vitB1: 0.04, vitB2: 0.02, vitB3: 0.6, vitB5: 0.1, vitB6: 0.08, vitB7: 0, vitB9: 15, vitB12: 0, calci: 10, magnesi: 11, sodi: 5, potassi: 237, clor: 10, ferro: 0.3, zinc: 0.2, iode: 0, seleni: 0 \}\
+      \},\
+      \{\
+        id: 12, nom: "Tom\'e0quet Pera", porcioBase: 100, unitat: 'g', calories: 19, tags: [],\
+        macros: \{ carbohidrats: 4.0, proteina: 0.9, greixos: 0.2 \},\
+        micros: \{ vitA: 40, vitD: 0, vitE: 0.54, vitK: 7.9, vitC: 13.7, vitB1: 0.03, vitB2: 0.01, vitB3: 0.5, vitB5: 0.08, vitB6: 0.08, vitB7: 0, vitB9: 15, vitB12: 0, calci: 10, magnesi: 11, sodi: 5, potassi: 237, clor: 10, ferro: 0.2, zinc: 0.1, iode: 0, seleni: 0 \}\
+      \},\
+      \{\
+        id: 13, nom: "Tom\'e0quet de Montserrat", porcioBase: 100, unitat: 'g', calories: 17, tags: [],\
+        macros: \{ carbohidrats: 3.5, proteina: 0.8, greixos: 0.1 \},\
+        micros: \{ vitA: 38, vitD: 0, vitE: 0.4, vitK: 7.0, vitC: 15, vitB1: 0.03, vitB2: 0.01, vitB3: 0.5, vitB5: 0.08, vitB6: 0.08, vitB7: 0, vitB9: 14, vitB12: 0, calci: 9, magnesi: 10, sodi: 4, potassi: 220, clor: 9, ferro: 0.2, zinc: 0.1, iode: 0, seleni: 0 \}\
+      \},\
+      \{\
+        id: 14, nom: "Arr\'f2s Integral (Cuit)", porcioBase: 100, unitat: 'g', calories: 111, tags: [],\
+        macros: \{ carbohidrats: 23, proteina: 2.6, greixos: 0.9 \},\
+        micros: \{ vitA: 0, vitD: 0, vitE: 0.1, vitK: 0.1, vitC: 0, vitB1: 0.1, vitB2: 0.02, vitB3: 1.5, vitB5: 0.3, vitB6: 0.1, vitB7: 0, vitB9: 4, vitB12: 0, calci: 10, magnesi: 43, sodi: 5, potassi: 43, clor: 10, ferro: 0.4, zinc: 0.6, iode: 0, seleni: 9.8 \}\
+      \},\
+      \{\
+        id: 15, nom: "Ou Dur", porcioBase: 1, unitat: 'unitat', calories: 78, tags: [],\
+        macros: \{ carbohidrats: 0.6, proteina: 6.3, greixos: 5.3 \},\
+        micros: \{ vitA: 74, vitD: 1.1, vitE: 0.5, vitK: 0.1, vitC: 0, vitB1: 0.02, vitB2: 0.15, vitB3: 0.03, vitB5: 0.7, vitB6: 0.06, vitB7: 10, vitB9: 22, vitB12: 0.6, calci: 25, magnesi: 5, sodi: 62, potassi: 63, clor: 70, ferro: 0.6, zinc: 0.5, iode: 12, seleni: 15.4 \}\
+      \},\
+      \{\
+        id: 16, nom: "Pl\'e0tan", porcioBase: 100, unitat: 'g', calories: 105, tags: ['alt_sucre'],\
+        macros: \{ carbohidrats: 27, proteina: 1.3, greixos: 0.3 \},\
+        micros: \{ vitA: 3, vitD: 0, vitE: 0.1, vitK: 0.5, vitC: 10.3, vitB1: 0.03, vitB2: 0.07, vitB3: 0.6, vitB5: 0.3, vitB6: 0.4, vitB7: 0, vitB9: 20, vitB12: 0, calci: 5, magnesi: 27, sodi: 1, potassi: 422, clor: 2, ferro: 0.2, zinc: 0.1, iode: 0, seleni: 1 \}\
+      \}\
+    ];\
+\
+    const LLISTA_MICROS = [\
+      \{ key: 'vitA', nom: 'Vitamina A', unitat: '\'b5g' \},\
+      \{ key: 'vitD', nom: 'Vitamina D', unitat: '\'b5g' \},\
+      \{ key: 'vitE', nom: 'Vitamina E', unitat: 'mg' \},\
+      \{ key: 'vitK', nom: 'Vitamina K', unitat: '\'b5g' \},\
+      \{ key: 'vitC', nom: 'Vitamina C', unitat: 'mg' \},\
+      \{ key: 'vitB1', nom: 'Vit. B1 (Tiamina)', unitat: 'mg' \},\
+      \{ key: 'vitB2', nom: 'Vit. B2 (Riboflavina)', unitat: 'mg' \},\
+      \{ key: 'vitB3', nom: 'Vit. B3 (Niacina)', unitat: 'mg' \},\
+      \{ key: 'vitB5', nom: 'Vit. B5 (\'c0cid pantot\'e8nic)', unitat: 'mg' \},\
+      \{ key: 'vitB6', nom: 'Vit. B6 (Piridoxina)', unitat: 'mg' \},\
+      \{ key: 'vitB7', nom: 'Vit. B7 (Biotina)', unitat: '\'b5g' \},\
+      \{ key: 'vitB9', nom: 'Vit. B9 (\'c0cid f\'f2lic)', unitat: '\'b5g' \},\
+      \{ key: 'vitB12', nom: 'Vit. B12 (Cobalamina)', unitat: '\'b5g' \},\
+      \{ key: 'calci', nom: 'Calci', unitat: 'mg' \},\
+      \{ key: 'magnesi', nom: 'Magnesi', unitat: 'mg' \},\
+      \{ key: 'sodi', nom: 'Sodi', unitat: 'mg' \},\
+      \{ key: 'potassi', nom: 'Potassi', unitat: 'mg' \},\
+      \{ key: 'clor', nom: 'Clor', unitat: 'mg' \},\
+      \{ key: 'ferro', nom: 'Ferro', unitat: 'mg' \},\
+      \{ key: 'zinc', nom: 'Zinc', unitat: 'mg' \},\
+      \{ key: 'iode', nom: 'Iode', unitat: '\'b5g' \},\
+      \{ key: 'seleni', nom: 'Seleni', unitat: '\'b5g' \},\
+    ];\
+\
+    function App() \{\
+      const [view, setView] = useState('questionnaire'); // 'questionnaire', 'home', 'detail', 'cart'\
+      const [perfil, setPerfil] = useState(\{ \
+        nom: '', \
+        hipertensio: false,\
+        diabetis: false,\
+        colesterol: false,\
+        celiaquia: false,\
+        lactosa: false\
+      \});\
+      const [cerca, setCerca] = useState('');\
+      const [alimentSeleccionat, setAlimentSeleccionat] = useState(null);\
+      const [quantitat, setQuantitat] = useState(100);\
+      const [carreto, setCarreto] = useState([]);\
+      \
+      const LIMIT_SODI_ALTA = 400;\
+\
+      const alimentsFiltrats = cerca.trim() === '' \
+        ? [] \
+        : ALIMENTS.filter(a => a.nom.toLowerCase().includes(cerca.toLowerCase()));\
+\
+      const obtenirAlertes = (aliment, qtat = aliment.porcioBase || 100) => \{\
+        const factor = qtat / (aliment.porcioBase || 100);\
+        const alertes = [];\
+        if (perfil.hipertensio && (aliment.micros.sodi * factor) > LIMIT_SODI_ALTA) \{\
+          alertes.push(\{ id: 'sodi', titol: 'Alt en Sal', text: `Aquesta quantitat t\'e9 $\{Math.round(aliment.micros.sodi * factor)\}mg de sodi. Moderar consum.` \});\
+        \}\
+        if (perfil.diabetis && aliment.tags.includes('alt_sucre')) \{\
+          alertes.push(\{ id: 'sucre', titol: 'Alt en Sucres', text: 'Cont\'e9 quantitats elevades de sucres simples.' \});\
+        \}\
+        if (perfil.colesterol && aliment.tags.includes('alt_greix')) \{\
+          alertes.push(\{ id: 'colesterol', titol: 'Greixos Saturats', text: 'Alt contingut en greixos saturats.' \});\
+        \}\
+        if (perfil.celiaquia && aliment.tags.includes('gluten')) \{\
+          alertes.push(\{ id: 'gluten', titol: 'Cont\'e9 Gluten', text: 'No apte per a persones cel\'edaques.' \});\
+        \}\
+        if (perfil.lactosa && aliment.tags.includes('lactosa')) \{\
+          alertes.push(\{ id: 'lactosa', titol: 'Cont\'e9 Lactosa', text: 'No apte per a intolerants a la lactosa.' \});\
+        \}\
+        return alertes;\
+      \};\
+\
+      const calcularPercentatgesMacros = (macros) => \{\
+        const totalCals = (macros.carbohidrats * 4) + (macros.proteina * 4) + (macros.greixos * 9);\
+        if (totalCals === 0) return \{ carbohidrats: 0, proteina: 0, greixos: 0 \};\
+        return \{\
+          carbohidrats: Math.round(((macros.carbohidrats * 4) / totalCals) * 100),\
+          proteina: Math.round(((macros.proteina * 4) / totalCals) * 100),\
+          greixos: Math.round(((macros.greixos * 9) / totalCals) * 100),\
+        \};\
+      \};\
+\
+      const afegirAlCarreto = (aliment) => \{\
+        setCarreto([...carreto, \{ aliment, quantitat \}]);\
+        setView('home');\
+        setCerca('');\
+      \};\
+\
+      const eliminarDelCarreto = (index) => \{\
+        const nouCarreto = [...carreto];\
+        nouCarreto.splice(index, 1);\
+        setCarreto(nouCarreto);\
+      \};\
+\
+      const totalsCarreto = useMemo(() => \{\
+        const totals = \{\
+          calories: 0,\
+          macros: \{ carbohidrats: 0, proteina: 0, greixos: 0 \},\
+          micros: \{\}\
+        \};\
+        LLISTA_MICROS.forEach(m => totals.micros[m.key] = 0);\
+\
+        carreto.forEach(item => \{\
+          const factor = item.quantitat / (item.aliment.porcioBase || 100);\
+          totals.calories += item.aliment.calories * factor;\
+          totals.macros.carbohidrats += item.aliment.macros.carbohidrats * factor;\
+          totals.macros.proteina += item.aliment.macros.proteina * factor;\
+          totals.macros.greixos += item.aliment.macros.greixos * factor;\
+          LLISTA_MICROS.forEach(m => \{\
+            totals.micros[m.key] += (item.aliment.micros[m.key] || 0) * factor;\
+          \});\
+        \});\
+\
+        totals.calories = Math.round(totals.calories);\
+        return totals;\
+      \}, [carreto]);\
+\
+      // --- VISTES ---\
+\
+      if (view === 'questionnaire') \{\
+        return (\
+          <div className="min-h-screen bg-[#FDFBF7] flex flex-col justify-center items-center p-6 text-[#155D27]">\
+            <div className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md border-t-8 border-[#155D27] my-8">\
+              <div className="flex justify-center mb-6 text-[#155D27]">\
+                <i className="fa-solid fa-user text-5xl"></i>\
+              </div>\
+              <h1 className="text-2xl font-bold mb-2 text-center">Benvingut a NutriTrack</h1>\
+              <p className="text-center text-gray-600 mb-8">Abans de comen\'e7ar, indica si tens alguna condici\'f3 m\'e8dica per personalitzar els teus avisos.</p>\
+              \
+              <div className="space-y-4">\
+                <div>\
+                  <label className="block text-sm font-semibold mb-2">Com et dius?</label>\
+                  <input \
+                    type="text" \
+                    value=\{perfil.nom\}\
+                    onChange=\{(e) => setPerfil(\{...perfil, nom: e.target.value\})\}\
+                    className="w-full p-3 rounded-lg border border-[#A9C3B4] focus:outline-none focus:ring-2 focus:ring-[#155D27] bg-[#FDFBF7]"\
+                    placeholder="El teu nom"\
+                  />\
+                </div>\
+                \
+                <div className="space-y-2 mt-4">\
+                  <p className="block text-sm font-semibold mb-2 border-b border-[#A9C3B4] pb-1">Perfil de salut:</p>\
+                  \
+                  \{[\
+                    \{ clau: 'hipertensio', nom: 'Hipertensi\'f3', desc: 'Avisos d\\'aliments alts en sodi' \},\
+                    \{ clau: 'diabetis', nom: 'Diabetis', desc: 'Avisos d\\'aliments alts en sucres' \},\
+                    \{ clau: 'colesterol', nom: 'Colesterol Alt', desc: 'Avisos d\\'aliments alts en greixos saturats' \},\
+                    \{ clau: 'celiaquia', nom: 'Celiaquia', desc: 'Avisos d\\'aliments amb gluten' \},\
+                    \{ clau: 'lactosa', nom: 'Intol. Lactosa', desc: 'Avisos d\\'aliments amb lactosa' \}\
+                  ].map(condicio => (\
+                    <label key=\{condicio.clau\} className="flex items-center space-x-3 cursor-pointer p-2 rounded-lg hover:bg-[#A9C3B4] hover:bg-opacity-20 transition-colors">\
+                      <input \
+                        type="checkbox" \
+                        checked=\{perfil[condicio.clau]\}\
+                        onChange=\{(e) => setPerfil(\{...perfil, [condicio.clau]: e.target.checked\})\}\
+                        className="w-5 h-5 accent-[#155D27]"\
+                      />\
+                      <div>\
+                        <span className="font-semibold block text-sm">\{condicio.nom\}</span>\
+                        <span className="text-xs text-gray-500">\{condicio.desc\}</span>\
+                      </div>\
+                    </label>\
+                  ))\}\
+                </div>\
+\
+                <button \
+                  onClick=\{() => setView('home')\}\
+                  className="w-full mt-6 bg-[#155D27] text-[#FDFBF7] p-3 rounded-lg font-bold shadow-md hover:bg-[#10481E] transition-colors"\
+                >\
+                  Comen\'e7ar\
+                </button>\
+              </div>\
+            </div>\
+          </div>\
+        );\
+      \}\
+\
+      return (\
+        <div className="min-h-screen bg-[#FDFBF7] text-[#155D27] font-sans pb-20 max-w-lg mx-auto shadow-2xl relative overflow-hidden flex flex-col">\
+          \{/* Header */\}\
+          <header className="bg-[#155D27] text-[#FDFBF7] p-4 shadow-md sticky top-0 z-10">\
+            <div className="flex justify-between items-center mb-2">\
+              <h1 className="text-xl font-bold flex items-center gap-2">\
+                <span className="bg-[#A9C3B4] text-[#155D27] p-1 rounded-md text-sm">NT</span>\
+                NutriTrack\
+              </h1>\
+              <div className="text-sm opacity-80 flex items-center gap-1">\
+                <i className="fa-solid fa-user text-sm"></i> Hola, \{perfil.nom || 'Usuari'\}\
+              </div>\
+            </div>\
+          </header>\
+\
+          \{/* Main Content Area */\}\
+          <main className="flex-1 overflow-y-auto">\
+            \
+            \{/* VISTA INICI / CERCA */\}\
+            \{view === 'home' && (\
+              <div className="p-4 space-y-4">\
+                <div className="relative">\
+                  <i className="fa-solid fa-magnifying-glass absolute left-3 top-4 text-[#155D27] opacity-60 text-lg"></i>\
+                  <input \
+                    type="text" \
+                    placeholder="Busca un ingredient..." \
+                    value=\{cerca\}\
+                    onChange=\{(e) => setCerca(e.target.value)\}\
+                    className="w-full p-3 pl-10 rounded-xl border border-[#A9C3B4] bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-[#155D27]"\
+                  />\
+                </div>\
+\
+                <div className="space-y-3 mt-4">\
+                  \{cerca.trim() === '' ? (\
+                    <div className="text-center text-[#155D27] text-opacity-70 mt-16 p-6 bg-white rounded-xl border border-dashed border-[#A9C3B4]">\
+                      <i className="fa-solid fa-database mx-auto mb-3 opacity-60 text-3xl block"></i>\
+                      <p className="font-semibold text-lg mb-1">Base de dades connectada</p>\
+                      <p className="text-sm">Escriu el nom de l'ingredient a dalt per iniciar la cerca (ex: Poma, Llet, Galetes...)</p>\
+                    </div>\
+                  ) : (\
+                    <>\
+                      <h2 className="font-semibold text-lg border-b-2 border-[#A9C3B4] pb-1">Resultats de cerca</h2>\
+                      \{alimentsFiltrats.map(aliment => \{\
+                        const alertes = obtenirAlertes(aliment, aliment.porcioBase || 100);\
+                        const teAlertes = alertes.length > 0;\
+                        \
+                        return (\
+                          <div \
+                            key=\{aliment.id\} \
+                            onClick=\{() => \{ \
+                              setAlimentSeleccionat(aliment); \
+                              setQuantitat(aliment.porcioBase || 100);\
+                              setView('detail'); \
+                            \}\}\
+                            className=\{`p-4 rounded-xl shadow-sm cursor-pointer transition-transform hover:scale-[1.02] flex justify-between items-center\
+                              $\{teAlertes ? 'bg-red-50 border-l-4 border-red-500' : 'bg-white border border-[#A9C3B4] border-opacity-40'\}\
+                            `\}\
+                          >\
+                            <div>\
+                              <h3 className=\{`font-bold text-lg $\{teAlertes ? 'text-red-700' : 'text-[#155D27]'\}`\}>\{aliment.nom\}</h3>\
+                              <p className="text-sm text-gray-500">\{aliment.calories\} kcal</p>\
+                            </div>\
+                            \{teAlertes && (\
+                              <div className="flex flex-col items-end gap-1">\
+                                \{alertes.map(alerta => (\
+                                  <div key=\{alerta.id\} className="flex items-center text-red-600 text-[10px] sm:text-xs font-semibold bg-red-100 px-2 py-1 rounded-md">\
+                                    <i className="fa-solid fa-triangle-exclamation mr-1 text-xs"></i> \{alerta.titol\}\
+                                  </div>\
+                                ))\}\
+                              </div>\
+                            )\}\
+                          </div>\
+                        )\
+                      \})\}\
+                      \{alimentsFiltrats.length === 0 && (\
+                        <p className="text-center text-gray-500 mt-10">Cap ingredient coincideix amb la teva recerca a la base de dades.</p>\
+                      )\}\
+                    </>\
+                  )\}\
+                </div>\
+              </div>\
+            )\}\
+\
+            \{/* VISTA DETALL ALIMENT */\}\
+            \{view === 'detail' && alimentSeleccionat && (\
+              <div className="p-4 pb-24 animate-in fade-in zoom-in-95 duration-200">\
+                <button onClick=\{() => setView('home')\} className="flex items-center text-[#155D27] mb-4 font-semibold">\
+                  <i className="fa-solid fa-chevron-left text-xl mr-2"></i> Tornar a la cerca\
+                </button>\
+                \
+                \{(() => \{\
+                  const factor = quantitat / (alimentSeleccionat.porcioBase || 100);\
+                  const alertesActuals = obtenirAlertes(alimentSeleccionat, quantitat);\
+                  \
+                  return (\
+                    <React.Fragment>\
+                      \{/* Llistat din\'e0mic d'alertes */\}\
+                      \{alertesActuals.length > 0 && (\
+                        <div className="space-y-2 mb-4">\
+                          \{alertesActuals.map(alerta => (\
+                            <div key=\{alerta.id\} className="bg-red-100 text-red-800 p-3 rounded-xl flex gap-3 shadow-sm border border-red-300 items-center">\
+                              <i className="fa-solid fa-triangle-exclamation flex-shrink-0 text-red-600 text-2xl"></i>\
+                              <div>\
+                                <p className="font-bold text-sm">\{alerta.titol\}</p>\
+                                <p className="text-xs">\{alerta.text\}</p>\
+                              </div>\
+                            </div>\
+                          ))\}\
+                        </div>\
+                      )\}\
+\
+                      <div className=\{`bg-white rounded-2xl p-6 shadow-md border-t-8 $\{alertesActuals.length > 0 ? 'border-red-500' : 'border-[#A9C3B4]'\}`\}>\
+                        <div className="flex justify-between items-end border-b border-gray-100 pb-4 mb-4">\
+                          <h2 className=\{`text-3xl font-extrabold $\{alertesActuals.length > 0 ? 'text-red-700' : 'text-[#155D27]'\}`\}>\
+                            \{alimentSeleccionat.nom\}\
+                          </h2>\
+                          <span className="text-xl font-bold bg-[#A9C3B4] bg-opacity-30 text-[#155D27] px-3 py-1 rounded-lg">\
+                            \{Math.round(alimentSeleccionat.calories * factor)\} kcal\
+                          </span>\
+                        </div>\
+\
+                        \{/* Selector de Quantitat */\}\
+                        <div className="mb-6 bg-[#FDFBF7] p-4 rounded-xl border border-[#A9C3B4] border-opacity-50">\
+                          <label className="block text-sm font-bold text-[#155D27] mb-2">Quantitat (\{alimentSeleccionat.unitat || 'g'\}):</label>\
+                          <div className="flex items-center gap-2">\
+                            <input \
+                              type="number" \
+                              min="0"\
+                              value=\{quantitat\}\
+                              onChange=\{(e) => setQuantitat(Number(e.target.value))\}\
+                              className="w-full p-3 rounded-lg border border-[#A9C3B4] focus:outline-none focus:ring-2 focus:ring-[#155D27] text-lg font-bold"\
+                            />\
+                            <span className="text-gray-500 font-semibold">\{alimentSeleccionat.unitat || 'g'\}</span>\
+                          </div>\
+                        </div>\
+\
+                        \{/* Macronutrients */\}\
+                        <div className="mb-6">\
+                          <h3 className="font-bold text-lg mb-3 flex items-center gap-2">\
+                            <i className="fa-solid fa-circle-info text-lg"></i> Macronutrients\
+                          </h3>\
+                          \{(() => \{\
+                            const macrosCalculats = \{\
+                              carbohidrats: alimentSeleccionat.macros.carbohidrats * factor,\
+                              proteina: alimentSeleccionat.macros.proteina * factor,\
+                              greixos: alimentSeleccionat.macros.greixos * factor\
+                            \};\
+                            const percent = calcularPercentatgesMacros(macrosCalculats);\
+                            \
+                            return (\
+                              <div className="space-y-3">\
+                                <div className="flex justify-between items-center text-sm">\
+                                  <span className="font-semibold w-24">Carbohidrats</span>\
+                                  <div className="flex-1 mx-3 h-3 bg-gray-200 rounded-full overflow-hidden">\
+                                    <div className="bg-orange-500 h-full" style=\{\{ width: `$\{percent.carbohidrats\}%` \}\}></div>\
+                                  </div>\
+                                  <span className="w-12 text-right">\{percent.carbohidrats\}%</span>\
+                                  <span className="w-12 text-right text-gray-500">\{Math.round(macrosCalculats.carbohidrats * 10) / 10\}g</span>\
+                                </div>\
+                                <div className="flex justify-between items-center text-sm">\
+                                  <span className="font-semibold w-24">Prote\'efnes</span>\
+                                  <div className="flex-1 mx-3 h-3 bg-gray-200 rounded-full overflow-hidden">\
+                                    <div className="bg-[#155D27] h-full" style=\{\{ width: `$\{percent.proteina\}%` \}\}></div>\
+                                  </div>\
+                                  <span className="w-12 text-right">\{percent.proteina\}%</span>\
+                                  <span className="w-12 text-right text-gray-500">\{Math.round(macrosCalculats.proteina * 10) / 10\}g</span>\
+                                </div>\
+                                <div className="flex justify-between items-center text-sm">\
+                                  <span className="font-semibold w-24">Greixos</span>\
+                                  <div className="flex-1 mx-3 h-3 bg-gray-200 rounded-full overflow-hidden">\
+                                    <div className="bg-yellow-500 h-full" style=\{\{ width: `$\{percent.greixos\}%` \}\}></div>\
+                                  </div>\
+                                  <span className="w-12 text-right">\{percent.greixos\}%</span>\
+                                  <span className="w-12 text-right text-gray-500">\{Math.round(macrosCalculats.greixos * 10) / 10\}g</span>\
+                                </div>\
+                              </div>\
+                            );\
+                          \})()\}\
+                        </div>\
+\
+                        \{/* Micronutrients */\}\
+                        <div>\
+                          <h3 className="font-bold text-lg mb-3 pt-4 border-t border-gray-100 text-[#155D27]">\
+                            Micronutrients\
+                          </h3>\
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs bg-[#FDFBF7] p-3 rounded-xl border border-[#A9C3B4] border-opacity-30">\
+                            \{LLISTA_MICROS.map(micro => \{\
+                              const valorCalculat = (alimentSeleccionat.micros[micro.key] || 0) * factor;\
+                              return (\
+                                <div key=\{micro.key\} className="flex justify-between items-center border-b border-gray-100 py-1 last:border-0">\
+                                  <span className="text-gray-700 truncate pr-2">\{micro.nom\}</span>\
+                                  <span className="font-semibold text-[#155D27]">\
+                                    \{Math.round(valorCalculat * 100) / 100\} \{micro.unitat\}\
+                                  </span>\
+                                </div>\
+                              );\
+                            \})\}\
+                          </div>\
+                        </div>\
+\
+                        <button \
+                          onClick=\{() => afegirAlCarreto(alimentSeleccionat)\}\
+                          className="w-full mt-6 bg-[#155D27] text-[#FDFBF7] p-4 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg hover:bg-[#10481E] active:scale-95 transition-all"\
+                        >\
+                          <i className="fa-solid fa-plus text-xl"></i> Afegir al carret\'f3\
+                        </button>\
+                      </div>\
+                    </React.Fragment>\
+                  );\
+                \})()\}\
+              </div>\
+            )\}\
+\
+            \{/* VISTA CARRET\'d3 (Resum del dia) */\}\
+            \{view === 'cart' && (\
+              <div className="p-4 space-y-4 pb-24">\
+                <h2 className="text-2xl font-extrabold text-[#155D27] border-b-2 border-[#A9C3B4] pb-2">El teu carret\'f3 d'avui</h2>\
+                \
+                \{carreto.length === 0 ? (\
+                  <div className="text-center p-10 bg-white rounded-2xl shadow-sm border border-gray-200">\
+                    <i className="fa-solid fa-cart-shopping mx-auto text-gray-300 mb-3 text-5xl block"></i>\
+                    <p className="text-gray-500">Encara no has afegit cap aliment.</p>\
+                    <button onClick=\{() => setView('home')\} className="mt-4 text-[#155D27] font-bold underline">\
+                      Buscar aliments\
+                    </button>\
+                  </div>\
+                ) : (\
+                  <>\
+                    <div className="bg-white rounded-2xl shadow-sm border border-[#A9C3B4] border-opacity-50 overflow-hidden">\
+                      <div className="p-3 bg-[#A9C3B4] bg-opacity-20 font-bold text-[#155D27] flex justify-between">\
+                        <span>Ingredients (\{carreto.length\})</span>\
+                        <span>\{totalsCarreto.calories\} kcal</span>\
+                      </div>\
+                      <div className="divide-y divide-gray-100">\
+                        \{carreto.map((item, index) => \{\
+                          const factor = item.quantitat / (item.aliment.porcioBase || 100);\
+                          const cals = Math.round(item.aliment.calories * factor);\
+                          return (\
+                            <div key=\{index\} className="p-3 flex justify-between items-center">\
+                              <div>\
+                                <p className="font-semibold text-sm">\{item.aliment.nom\} <span className="text-[#A9C3B4] ml-1 font-normal">(\{item.quantitat\}\{item.aliment.unitat || 'g'\})</span></p>\
+                                <p className="text-xs text-gray-500">\{cals\} kcal</p>\
+                              </div>\
+                              <button \
+                                onClick=\{() => eliminarDelCarreto(index)\}\
+                                className="text-red-400 hover:text-red-600 p-2"\
+                              >\
+                                <i className="fa-solid fa-trash-can text-base"></i>\
+                              </button>\
+                            </div>\
+                          );\
+                        \})\}\
+                      </div>\
+                    </div>\
+\
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#A9C3B4] border-opacity-50 mt-4">\
+                      <h3 className="font-bold text-[#155D27] mb-3">Total Macronutrients</h3>\
+                      \{(() => \{\
+                        const percent = calcularPercentatgesMacros(totalsCarreto.macros);\
+                        return (\
+                          <div className="space-y-3">\
+                            <div className="flex justify-between items-center text-sm">\
+                              <span className="font-semibold w-24">Carbohidrats</span>\
+                              <span className="font-bold text-orange-500">\{percent.carbohidrats\}%</span>\
+                              <span className="w-16 text-right text-gray-500">\{Math.round(totalsCarreto.macros.carbohidrats)\}g</span>\
+                            </div>\
+                            <div className="flex justify-between items-center text-sm">\
+                              <span className="font-semibold w-24">Prote\'efnes</span>\
+                              <span className="font-bold text-[#155D27]">\{percent.proteina\}%</span>\
+                              <span className="w-16 text-right text-gray-500">\{Math.round(totalsCarreto.macros.proteina)\}g</span>\
+                            </div>\
+                            <div className="flex justify-between items-center text-sm">\
+                              <span className="font-semibold w-24">Greixos</span>\
+                              <span className="font-bold text-yellow-600">\{percent.greixos\}%</span>\
+                              <span className="w-16 text-right text-gray-500">\{Math.round(totalsCarreto.macros.greixos)\}g</span>\
+                            </div>\
+                          </div>\
+                        );\
+                      \})()\}\
+                    </div>\
+\
+                    <div className="bg-white rounded-2xl p-4 shadow-sm border border-[#A9C3B4] border-opacity-50 mt-4">\
+                      <h3 className="font-bold text-[#155D27] mb-3">Total Micronutrients</h3>\
+                      \
+                      \{perfil.hipertensio && totalsCarreto.micros.sodi > 2000 && (\
+                        <div className="bg-red-100 text-red-800 p-3 rounded-lg text-xs flex gap-2 mb-3 border border-red-200 items-center">\
+                          <i className="fa-solid fa-triangle-exclamation text-red-600 flex-shrink-0 text-base"></i>\
+                          <span>Has superat el l\'edmit diari recomanat de sodi (2000mg) per a la hipertensi\'f3. Total: \{Math.round(totalsCarreto.micros.sodi)\}mg.</span>\
+                        </div>\
+                      )\}\
+\
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-[11px]">\
+                        \{LLISTA_MICROS.map(micro => \{\
+                          const quantitat = totalsCarreto.micros[micro.key];\
+                          const isSodi = micro.key === 'sodi';\
+                          const alertaActiva = isSodi && perfil.hipertensio && quantitat > 2000;\
+                          \
+                          return (\
+                            <div key=\{micro.key\} className=\{`flex justify-between border-b border-gray-100 py-1 $\{alertaActiva ? 'text-red-600 font-bold' : 'text-gray-600'\}`\}>\
+                              <span className="truncate pr-1">\{micro.nom\}</span>\
+                              <span>\{Math.round(quantitat * 10) / 10\} \{micro.unitat\}</span>\
+                            </div>\
+                          );\
+                        \})\}\
+                      </div>\
+                    </div>\
+                  </>\
+                )\}\
+              </div>\
+            )\}\
+          </main>\
+\
+          \{/* Bottom Navigation */\}\
+          <nav className="absolute bottom-0 w-full bg-[#155D27] flex justify-around p-3 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] rounded-t-xl text-[#FDFBF7]">\
+            <button \
+              onClick=\{() => \{ setView('home'); setAlimentSeleccionat(null); \}\}\
+              className=\{`flex flex-col items-center p-2 px-6 rounded-xl transition-colors $\{view === 'home' || view === 'detail' ? 'bg-[#A9C3B4] text-[#155D27]' : 'hover:bg-[#10481E]'\}`\}\
+            >\
+              <i className="fa-solid fa-magnifying-glass text-2xl"></i>\
+              <span className="text-xs font-semibold mt-1">Cerca</span>\
+            </button>\
+            <button \
+              onClick=\{() => setView('cart')\}\
+              className=\{`flex flex-col items-center p-2 px-6 rounded-xl transition-colors relative $\{view === 'cart' ? 'bg-[#A9C3B4] text-[#155D27]' : 'hover:bg-[#10481E]'\}`\}\
+            >\
+              <i className="fa-solid fa-cart-shopping text-2xl"></i>\
+              <span className="text-xs font-semibold mt-1">Diari</span>\
+              \{carreto.length > 0 && (\
+                <span className="absolute top-1 right-4 bg-red-500 text-white text-[10px] w-5 h-5 flex items-center justify-center rounded-full border-2 border-[#155D27]">\
+                  \{carreto.length\}\
+                </span>\
+              )\}\
+            </button>\
+          </nav>\
+        </div>\
+      );\
+    \}\
+\
+    const root = ReactDOM.createRoot(document.getElementById('root'));\
+    root.render(<App />);\
+  </script>\
+</body>\
+</html>}
